@@ -1,0 +1,293 @@
+-- Dropando o banco de dados se existir
+IF EXISTS (SELECT * FROM sys.databases WHERE name = 'SecureATM')
+    DROP DATABASE SecureATM;
+
+-- Criando o banco de dados
+CREATE DATABASE SecureATM;
+
+-- Utilizando o banco de dados criado
+USE SecureATM;
+
+-- Criando a tabela plano
+CREATE TABLE plano (
+    idPlano INT IDENTITY(1,1) PRIMARY KEY,
+    tipo INT,
+    nome VARCHAR(45)
+);
+
+-- Inserindo dados na tabela plano
+INSERT INTO plano (tipo, nome) VALUES
+(1, 'standart'),
+(2, 'advanced');
+
+-- Criando a tabela empresa
+CREATE TABLE empresa (
+    idEmp INT IDENTITY(1,1) PRIMARY KEY,
+    CNPJ CHAR(14),
+    nome VARCHAR(45),
+    razao_social VARCHAR(45),
+    codigoEmpresa INT,
+    fkPlano INT,
+    FOREIGN KEY (fkPlano) REFERENCES plano(idPlano)
+);
+
+-- Inserindo dados na tabela empresa
+INSERT INTO empresa (CNPJ, nome, razao_social, codigoEmpresa, fkPlano) VALUES
+('012012012012', 'bradesco', 'Roberto Silva', 0121, 2),
+('012012012012', 'santander', 'Roberto nogueira', 0212, 2);
+
+-- Criando a tabela agencia
+CREATE TABLE agencia (
+    idAgen INT IDENTITY(1,1) PRIMARY KEY,
+    nAgencia VARCHAR(10),
+    fkEmpresa INT,
+    FOREIGN KEY (fkEmpresa) REFERENCES empresa(idEmp)
+);
+
+INSERT INTO agencia VALUES
+('121-1', 1);
+
+-- Criando a tabela nivelAcesso
+CREATE TABLE nivelAcesso (
+    idNivelAcesso INT IDENTITY(1,1) PRIMARY KEY,
+    tipo INT,
+    cargo varchar(30)
+);
+
+-- Inserindo dados na tabela nivelAcesso
+INSERT INTO nivelAcesso (tipo, cargo) VALUES
+(2, 'RepresentanteLegal'),
+(1, 'EngenheiroDeNoc'),
+(3, 'UsuarioComum');
+
+-- Criando a tabela usuario
+CREATE TABLE usuario (
+    idUsuario INT IDENTITY(1,1),
+    email VARCHAR(45),
+    senha VARCHAR(45),
+    nome VARCHAR(45),
+    fkAgencia INT,
+    fkEmpUsuario INT,
+    fkNivelAcesso INT,
+    PRIMARY KEY (idUsuario, fkAgencia),
+    FOREIGN KEY (fkAgencia) REFERENCES agencia(idAgen),
+    FOREIGN KEY (fkEmpUsuario) REFERENCES empresa(idEmp)
+);
+
+-- Inserindo dados na tabela usuario
+INSERT INTO usuario (email, senha, nome, fkAgencia, fkEmpUsuario, fkNivelAcesso) VALUES
+('Bruno.Bradesco@Brad.com', 'Brad@123', 'Bruno', 1, 1, 2);
+
+-- Criando a tabela localizacao
+CREATE TABLE localizacao (
+    idLoc INT IDENTITY(1,1) PRIMARY KEY,
+    cep CHAR(14),
+    rua VARCHAR(45),
+    numero INT,
+    estado CHAR(2),
+    pais VARCHAR(45),
+    fkAgenciaLoc INT,
+    FOREIGN KEY (fkAgenciaLoc) REFERENCES agencia(idAgen)
+);
+
+-- Criando a tabela ATM
+CREATE TABLE ATM (
+    idATM INT IDENTITY(1,1) PRIMARY KEY,
+    Modelo VARCHAR(45),
+    Fabricante VARCHAR(45),
+    AgenciaID INT,
+    fkAgenciaEmp INT,
+    FOREIGN KEY (AgenciaID) REFERENCES agencia(idAgen),
+    FOREIGN KEY (fkAgenciaEmp) REFERENCES agencia(idEmp)
+);
+
+INSERT INTO ATM VALUES 
+('AutoAtendimento', 'Delfors', 1, 1);
+
+-- Criando a tabela logs
+CREATE TABLE logs (
+    idLogs INT IDENTITY(1,1) PRIMARY KEY,
+    data_hora DATETIME,
+    NCartao CHAR(16),
+    contaCliente CHAR(8),
+    fk_idATM INT,
+    fk_ATMAgencia INT,
+    fk_AgenciaEmpresa INT,
+    FOREIGN KEY (fk_idATM) REFERENCES ATM(idATM),
+    FOREIGN KEY (fk_ATMAgencia) REFERENCES ATM(AgenciaID),
+    FOREIGN KEY (fk_AgenciaEmpresa) REFERENCES ATM(fkAgenciaEmp)
+);
+
+-- Criando a tabela mensagem
+CREATE TABLE mensagem (
+    idMensagem INT IDENTITY(1,1) PRIMARY KEY,
+    Mensagem VARCHAR(500),
+    fkLogs INT,
+    FOREIGN KEY (fkLogs) REFERENCES logs(idLogs)
+);
+
+-- Criando a tabela TipoERRO
+CREATE TABLE TipoERRO (
+    idTipoERRO INT IDENTITY(1,1) PRIMARY KEY,
+    Tipo VARCHAR(45),
+    fkMSG INT,
+    FOREIGN KEY (fkMSG) REFERENCES mensagem(idMensagem)
+);
+
+-- Criando a tabela rede
+CREATE TABLE rede (
+    idRede INT IDENTITY(1,1) PRIMARY KEY,
+    Ping INT,
+    pacotesEnviados INT,
+    pacotesRecebidos INT,
+    fk__idATM INT,
+    fk__ATMAgencia INT,
+    fk__AgenciaEmpresa INT,
+    FOREIGN KEY (fk__idATM) REFERENCES ATM(idATM),
+    FOREIGN KEY (fk__ATMAgencia) REFERENCES ATM(AgenciaID),
+    FOREIGN KEY (fk__AgenciaEmpresa) REFERENCES ATM(fkAgenciaEmp)
+);
+
+-- Criando a tabela DDoS
+CREATE TABLE DDoS (
+    idDDoS INT IDENTITY(1,1) PRIMARY KEY,
+    IPAtq CHAR(18),
+    qtdAtq INT,
+    fkRede INT,
+    FOREIGN KEY (fkRede) REFERENCES rede(idRede)
+);
+
+-- Criando a tabela Processos
+CREATE TABLE Processos (
+    id INT IDENTITY(1,1),
+    PID INT,
+    nome VARCHAR(45),
+    data_hora DATETIME,
+    fkATM INT,
+    PRIMARY KEY (id),
+    FOREIGN KEY (fkATM) REFERENCES ATM(idATM)
+);
+
+-- Inserindo dados na tabela Processos
+INSERT INTO Processos VALUES 
+(2556, 'muitolegal', '2023-11-19 00:00:00', 1 );
+
+-- Criando a tabela CodigoComponentes
+CREATE TABLE CodigoComponentes (
+    idCodComponentes INT IDENTITY(1,1) PRIMARY KEY,
+    Componente VARCHAR(45)
+);
+
+-- Inserindo dados na tabela CodigoComponentes
+INSERT INTO CodigoComponentes (Componente) VALUES 
+('RAM'),
+('Disco'),
+('CPU');
+
+-- Criando a tabela Tipo
+CREATE TABLE Tipo (
+    idTipo INT IDENTITY(1,1) PRIMARY KEY,
+    UnidadeMedida VARCHAR(2)
+);
+
+-- Inserindo dados na tabela Tipo
+INSERT INTO Tipo (UnidadeMedida) VALUES
+('GB' ),
+('Mb' );
+
+-- Criando a tabela Componentes
+CREATE TABLE Componentes (
+    id INT IDENTITY(1,1),
+    quantidade INT,
+    CodigoComponenteID INT,
+    ATMID INT,
+    TipoID INT,
+    PRIMARY KEY (id),
+    FOREIGN KEY (CodigoComponenteID) REFERENCES CodigoComponentes(idCodComponentes),
+    FOREIGN KEY (ATMID) REFERENCES ATM(idATM),
+    FOREIGN KEY (TipoID) REFERENCES Tipo(idTipo)
+);
+
+-- Inserindo dados na tabela Componentes
+INSERT INTO Componentes VALUES
+(1, 1, 1, 1, 1),
+(1, 1, 2, 1, 1),
+(1, 1, 3, 1, 1);
+
+-- Criando a tabela tempXatividade
+CREATE TABLE tempXatividade (
+    idTempXAtiv INT IDENTITY(1,1) PRIMARY KEY,
+    temperatura FLOAT,
+    data_hora DATETIME,
+    idComp INT,
+    idCompATM INT,
+    FOREIGN KEY (idComp) REFERENCES Componentes(id),
+    FOREIGN KEY (idCompATM) REFERENCES ATM(idATM)
+);
+
+-- Criando a tabela API
+CREATE TABLE API (
+    idAPI INT IDENTITY(1,1) PRIMARY KEY,
+    nome VARCHAR(45),
+    linguagem VARCHAR(45)
+);
+
+-- Inserindo dados na tabela API
+INSERT INTO API (nome, linguagem) VALUES
+('API Grupo', 'Kotlin'),
+('API Grupo', 'Python');
+
+-- Criando a tabela Leitura
+CREATE TABLE Leitura (
+    LeituraID INT IDENTITY(1,1),
+    DataRegistro DATETIME,
+    Valor FLOAT,
+    Componente_ID INT,
+    ATMComp_ID INT,
+    APIID INT,
+    PRIMARY KEY (LeituraID),
+    FOREIGN KEY (Componente_ID) REFERENCES Componentes(id),
+    FOREIGN KEY (ATMComp_ID) REFERENCES ATM(idATM),
+    FOREIGN KEY (APIID) REFERENCES API(idAPI)
+);
+
+-- Inserindo dados na tabela Leitura
+INSERT INTO Leitura VALUES 
+('2023-11-19 13:00:00', 42, 1, 1, 1),
+('2023-11-19 14:30:00', 38, 2, 1, 1),
+('2023-11-19 02:50:00', 19, 3, 1, 1);
+
+-- Criando a tabela Escalonamento
+CREATE TABLE Escalonamento (
+    Escalonamento_ID INT IDENTITY(1,1) PRIMARY KEY,
+    TipoEmergencia VARCHAR(45)
+);
+
+-- Inserindo dados na tabela Escalonamento
+INSERT INTO Escalonamento (TipoEmergencia) VALUES
+('Emergência'),
+('Médio'),
+('Em funcionamento');
+
+-- Criando a tabela Aviso
+CREATE TABLE Aviso (
+    id INT IDENTITY(1,1),
+    Leitura_ID INT,
+    DataHora DATETIME,
+    Escalonamento_ID INT,
+    FOREIGN KEY (Leitura_ID) REFERENCES Leitura(LeituraID),
+    FOREIGN KEY (Escalonamento_ID) REFERENCES Escalonamento(Escalonamento_ID)
+);
+
+-- Criando a tabela relatarProblema
+CREATE TABLE relatarProblema (
+    idRelatarProblema INT IDENTITY(1,1) PRIMARY KEY,
+    nome VARCHAR(45),
+    sobrenome VARCHAR(45),
+    email VARCHAR(50),
+    tituloProblema VARCHAR(45),
+    descricao VARCHAR(100),
+    dataHoraProblema DATETIME
+);
+
+
