@@ -1,5 +1,6 @@
 import com.github.britooo.looca.api.core.Looca
 import org.springframework.jdbc.core.JdbcTemplate
+import javax.swing.JOptionPane
 
 val looca: Looca = Looca()
 
@@ -17,27 +18,28 @@ class Repositorio {
         jdbcTemplate.execute(
             """
         CREATE TABLE IF NOT EXISTS temperaturaCPU (
-        idTempXAtiv INT AUTO_INCREMENT PRIMARY KEY,
-        temperatura FLOAT,
+        idTemp INT AUTO_INCREMENT PRIMARY KEY,
+        temperatura DECIMAL(10,2),
         data_hora DATETIME,
-        idComp INT,
-        idCompATM INT,
-        FOREIGN KEY (idComp) REFERENCES Componentes(id),
-        FOREIGN KEY (idCompATM) REFERENCES ATM(idATM)
-);
+        fkComp INT,
+        fkATM INT,
+        FOREIGN KEY (fkComp) REFERENCES Componentes(id),
+        FOREIGN KEY (fkATM) REFERENCES ATM(idATM)
+        );
         """
         )
 
     }
 
-    // Função para cadastrar informações sobre um processo no banco de dados
-    fun cadastrar(novaTemperatura: Temperatura) {
+    // Função para cadastrar in formações sobre um processo no banco de dados
+    fun cadastrar(novaTemperatura: Temperatura, idATM: Int) {
         jdbcTemplate.update(
             """
-            INSERT INTO temperaturaCPU(temperatura, data_hora, idComp, idCompATM) VALUES (?, ?, 3, 1)
+            INSERT INTO temperaturaCPU(temperatura, data_hora, fkComp, fkATM) VALUES (?, ?, 3, ?)
         """,
             novaTemperatura.temperatura,
-            novaTemperatura.data_hora
+            novaTemperatura.data_hora,
+            idATM
         )
     }
 
@@ -47,5 +49,47 @@ class Repositorio {
         val count = jdbcTemplate.queryForObject(sql, Int::class.java, email, senha)
 
         return count > 0
+    }
+
+    fun verificarExistenciaATM(idATM: Int): Boolean {
+        val sql = "SELECT COUNT(*) FROM ATM WHERE idATM = ?"
+        val count = jdbcTemplate.queryForObject(sql, Int::class.java, idATM)
+        return count > 0
+    }
+
+    // Função para listar os IDs dos ATMs disponíveis para o usuário escolher
+    fun listarIDsATMsParaEscolha(): Int? {
+        // Lógica para obter a lista de IDs dos ATMs do banco de dados
+        val listaDeIDsATMs = obterListaDeIDsATMsDoBancoDeDados()
+
+        // Exibe a lista de IDs dos ATMs para o usuário escolher
+        val escolha = JOptionPane.showInputDialog(
+            null,
+            "Escolha o ID do ATM:",
+            "Escolha de ATM",
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            listaDeIDsATMs.toTypedArray(),
+            null
+        ) as Int? ?: return null
+
+        // Verifica se o ATM escolhido existe no banco de dados
+        if (verificarExistenciaATM(escolha)) {
+            return escolha
+        } else {
+            JOptionPane.showMessageDialog(
+                null,
+                "ATM escolhido não encontrado no banco de dados. Saindo do programa.",
+                "Erro",
+                JOptionPane.ERROR_MESSAGE
+            )
+            return null
+        }
+    }
+
+    // Função para obter a lista de IDs dos ATMs do banco de dados
+    private fun obterListaDeIDsATMsDoBancoDeDados(): List<Int> {
+        val sql = "SELECT idATM FROM ATM"
+        return jdbcTemplate.queryForList(sql, Int::class.java)
     }
 }

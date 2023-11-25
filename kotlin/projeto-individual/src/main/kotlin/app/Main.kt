@@ -31,6 +31,16 @@ open class Main {
                         JOptionPane.INFORMATION_MESSAGE
                     )
 
+                    val idATMEscolhido = repositorio.listarIDsATMsParaEscolha()
+
+                    if (idATMEscolhido != null) {
+                        // Restante do código...
+
+                        // Agora, você pode usar 'idATMEscolhido' como a fkATM nas operações do banco de dados
+                        println("ID do ATM Escolhido: $idATMEscolhido")
+
+                    }
+
                     // Cria uma tabela no banco de dados
                     repositorio.criarTabela()
 
@@ -41,13 +51,15 @@ open class Main {
 
                     // Loop infinito para monitorar e cadastrar temperaturas a cada 5 segundos
                     while (true) {
-                        val temperatura = looca.temperatura
+                        val temperatura = looca.temperatura.getTemperatura()
                         val novaTemperatura = Temperatura()
 
                         // Atualiza a propriedade data_hora antes de cada inserção
                         novaTemperatura.data_hora = LocalDateTime.now()
 
-                        repositorio.cadastrar(novaTemperatura)
+                        if (idATMEscolhido != null) {
+                            repositorio.cadastrar(novaTemperatura, idATMEscolhido)
+                        }
 
                         println("""
                             Temperatura da CPU: $temperatura
