@@ -33,11 +33,15 @@ class Repositorio {
 
     // Função para cadastrar in formações sobre um processo no banco de dados
     fun cadastrar(novaTemperatura: Temperatura, idATM: Int) {
+
+        val temperatura = looca.temperatura
+        var novaTemp = Temperatura()
+        novaTemp.temperatura = temperatura.temperatura
         jdbcTemplate.update(
             """
             INSERT INTO temperaturaCPU(temperatura, data_hora, fkComp, fkATM) VALUES (?, ?, 3, ?)
         """,
-            novaTemperatura.temperatura,
+            novaTemp.temperatura,
             novaTemperatura.data_hora,
             idATM
         )
